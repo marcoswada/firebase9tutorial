@@ -9,6 +9,8 @@ import {
 
 import {
     getAuth, createUserWithEmailAndPassword,
+    signOut, signInWithEmailAndPassword,
+    onAuthStateChanged,
 } from "firebase/auth"
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -38,7 +40,7 @@ const colRef = collection(db, 'books')
 const q=query(colRef, orderBy('createdAt'))
 
 // get collecrtion data in realtime
-onSnapshot(q,(snapshot) => {
+const unsubCol = onSnapshot(q,(snapshot) => {
     let books=[]
     snapshot.docs.forEach((doc)=> {
         books.push({ ...doc.data(), id: doc.id})
@@ -76,7 +78,7 @@ getDoc(docRef)
         console.log(doc.data(), doc.id)
     })
 
-onSnapshot(docRef,(doc)=>{
+const unsubDoc = onSnapshot(docRef,(doc)=>{
     console.log({ ...doc.data(), id: doc.id })
 })
 
@@ -110,3 +112,40 @@ signUpForm.addEventListener('submit',(e)=>{
         })
 })
 
+// login form
+const signinForm = document.querySelector('.login')
+signinForm.addEventListener("submit", (e)=>{
+    e.preventDefault()
+    signInWithEmailAndPassword(auth, signinForm.email.value, signinForm.password.value)
+        .then((cred)=>{
+            //console.log ("user logged in:", cred.user)
+        })
+        .catch ((err)=>{
+            console.log(err.message)
+        })
+})
+
+//logout button
+const logoutButton = document.querySelector('.logout')
+logoutButton.addEventListener('click',()=>{
+    signOut(auth)
+        .then(()=>{
+            //console.log('The user signed out')
+        })
+        .catch ((err)=>{
+            console.log(err.message)
+        })
+})
+
+// subscribe to authentication changes
+const unsubAuth = onAuthStateChanged(auth,(user)=>{
+    console.log ("auth change:", user)
+})
+
+const unsubButton = document.querySelector(".unsub")
+unsubButton.addEventListener("click", ()=>{
+    console.log("Unsubscribing...")
+    unsubCol()
+    unsubDoc()
+    unsubAuth()
+})
